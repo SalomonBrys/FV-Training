@@ -3,19 +3,16 @@ package com.demo.myfundvisorykmmapp.android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.demo.myfundvisorykmmapp.Controller
-import com.demo.myfundvisorykmmapp.HNItem
 import com.demo.myfvapp.ui.theme.MyFVAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -41,42 +38,34 @@ fun ContentView() {
     val controller = remember { Controller() }
     val model by controller.model.collectAsState()
 
-    ItemListView(model) { controller.process(it) }
-}
+    val navController = rememberNavController()
 
-@Composable
-fun ItemListView(
-    model: Controller.Model,
-    postIntent: (Controller.Intent) -> Unit
-) {
-    when (model) {
-        is Controller.Model.Loading -> {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+    NavHost(navController = navController, startDestination = "home") {
+        composable("home") {
+            ItemListView(
+                model = model,
+                postIntent = { controller.process(it) },
+                navController = navController
+            )
         }
-        is Controller.Model.Items -> {
-            LazyColumn {
-                model.items.forEach {
-                    item {
-                        Text(
-                            text = it.title,
-                            modifier = Modifier
-                                .clickable {
-
-                                }
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp, vertical = 12.dp)
-                        )
-                        Divider()
-                    }
-                }
+        composable(
+            route = "item/{id}",
+            arguments = listOf(navArgument("id") { type = NavType.LongType })
+        ) { entry ->
+            val id = entry.arguments!!.getLong("id")
+            val m = model
+            if (m is Controller.Model.Items) {
+                val item = m.items.first { it.id == id }
+                ItemView(item)
+            } else {
+                error("Items were not fetched!")
             }
         }
     }
+
+//    ItemListView(model) { controller.process(it) }
 }
+
 
 //@Composable
 //fun ScreenView(
@@ -183,20 +172,3 @@ fun ItemListView(
 //        )
 //    }
 //}
-
-@Preview(
-    showBackground = true,
-    showSystemUi = true
-)
-@Composable
-fun ContentViewPreview() {
-    MyFVAppTheme {
-        ItemListView(
-            model = Controller.Model.Items(listOf(
-                HNItem(1, "story", 0, null, emptyList(), null, "Ceci est un titre", 0),
-                HNItem(1, "story", 0, null, emptyList(), null, "Un autre message", 0),
-            )),
-            postIntent = { println(it) }
-        )
-    }
-}

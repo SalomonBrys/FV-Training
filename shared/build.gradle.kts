@@ -17,12 +17,12 @@ kotlin {
         }
     }
 
-    val ktor_version = "1.6.7"
+    val ktor_version = "1.5.4"
 
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
                 implementation("io.ktor:ktor-client-core:$ktor_version")
                 implementation("io.ktor:ktor-client-serialization:$ktor_version")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.1")
