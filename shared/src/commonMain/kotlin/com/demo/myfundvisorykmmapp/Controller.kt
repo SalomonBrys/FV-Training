@@ -12,16 +12,14 @@ import kotlinx.coroutines.launch
 class Controller {
 
     sealed interface Model {
-        data class Form(val errorMessage: String? = null) : Model
-        object LoggingIn : Model
-        data class LoggedIn(val username: String) : Model
+        object Loading : Model
+        data class Items(val items: List<HNItem>) : Model
     }
 
     sealed interface Intent {
-        data class LogIn(val username: String, val password: String) : Intent
     }
 
-    private var _model: MutableStateFlow<Model> = MutableStateFlow(Model.Form())
+    private var _model: MutableStateFlow<Model> = MutableStateFlow(Model.Loading)
     val model: StateFlow<Model> get() = _model.asStateFlow()
 
     val client = HttpClient {
@@ -34,36 +32,24 @@ class Controller {
 
     init {
         MainScope().launch {
-            val ids = client.request<List<Long>>("https://hacker-news.firebaseio.com/v0/topstories.json").take(10)
+            val ids = client.request<List<Long>>("https://hacker-news.firebaseio.com/v0/topstories.json").take(100)
             val items = ids.asFlow()
-                .flatMapMerge(20) {
+                .flatMapMerge(25) {
                     flow {
-                        println("Requesting https://hacker-news.firebaseio.com/v0/item/${it}.json")
+//                        println("Requesting https://hacker-news.firebaseio.com/v0/item/${it}.json")
                         val item = client.request<HNItem>("https://hacker-news.firebaseio.com/v0/item/${it}.json")
-                        println("Got item $item")
+//                        println("Got item $item")
                         emit(item)
                     }
                 }
                 .toList()
-            println("HTTP RESPONSE:")
-            println(items)
-            println("------------------------------------------")
+            _model.tryEmit(Model.Items(items))
         }
     }
 
     fun process(intent: Intent) {
-        when (intent) {
-            is Intent.LogIn -> {
-                _model.tryEmit(Model.LoggingIn)
-
-                runDelayed(3000) {
-                    _model.tryEmit(
-                        if (intent.username == "john" && intent.password == "doe") Model.LoggedIn("john")
-                        else Model.Form("Bad password!")
-                    )
-                }
-            }
-        }
+//        when (intent) {
+//        }
     }
 
 }
