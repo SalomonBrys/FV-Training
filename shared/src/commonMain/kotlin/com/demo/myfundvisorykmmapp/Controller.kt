@@ -32,7 +32,7 @@ class Controller {
 
     init {
         MainScope().launch {
-            val ids = client.request<List<Long>>("https://hacker-news.firebaseio.com/v0/topstories.json").take(100)
+            val ids = client.request<List<Long>>("https://hacker-news.firebaseio.com/v0/topstories.json").take(42)
             val items = ids.asFlow()
                 .flatMapMerge(25) {
                     flow {
